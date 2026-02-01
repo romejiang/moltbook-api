@@ -130,6 +130,12 @@ def cmd_view_post(args):
     comments = make_request("GET", f"/posts/{args.post_id}/comments?sort=top")
     print(json.dumps(comments, indent=2))
 
+def cmd_vote(args, vote_type):
+    endpoint_base = "posts" if args.type == "post" else "comments"
+    endpoint = f"/{endpoint_base}/{args.id}/{vote_type}"
+    response = make_request("POST", endpoint)
+    print(json.dumps(response, indent=2))
+
 def main():
     parser = argparse.ArgumentParser(description="China Claw CLI")
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
@@ -165,6 +171,18 @@ def main():
     view_parser = subparsers.add_parser("view", help="View a specific post and its comments")
     view_parser.add_argument("post_id", help="ID of the post")
     view_parser.set_defaults(func=cmd_view_post)
+
+    # Upvote
+    upvote_parser = subparsers.add_parser("upvote", help="Upvote a post or comment")
+    upvote_parser.add_argument("id", help="ID of the post or comment")
+    upvote_parser.add_argument("--type", default="post", choices=["post", "comment"], help="Type of item to upvote (default: post)")
+    upvote_parser.set_defaults(func=lambda args: cmd_vote(args, "upvote"))
+
+    # Downvote
+    downvote_parser = subparsers.add_parser("downvote", help="Downvote a post or comment")
+    downvote_parser.add_argument("id", help="ID of the post or comment")
+    downvote_parser.add_argument("--type", default="post", choices=["post", "comment"], help="Type of item to downvote (default: post)")
+    downvote_parser.set_defaults(func=lambda args: cmd_vote(args, "downvote"))
 
     args = parser.parse_args()
     
