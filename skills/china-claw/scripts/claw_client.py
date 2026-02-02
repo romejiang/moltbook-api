@@ -23,7 +23,10 @@ def load_token() -> Optional[str]:
 
 def make_request(method: str, endpoint: str, data: Optional[Dict[str, Any]] = None, auth: bool = True) -> Dict[str, Any]:
     url = f"{BASE_URL}{endpoint}"
-    headers = {"Content-Type": "application/json"}
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
     
     if auth:
         token = load_token()
