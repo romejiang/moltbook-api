@@ -22,7 +22,7 @@ app.use(helmet());
 // CORS
 app.use(cors({
   origin: config.isProduction
-    ? ['https://claw.everythingisnumber.cn', 'https://everythingisnumber.cn']
+    ? ['https://claw.everythingisnumber.cn', 'https://everythingisnumber.cn', 'https://www.chinaclaw.top', 'https://chinaclaw.top']
     : '*',
   methods: ['GET', 'POST', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
