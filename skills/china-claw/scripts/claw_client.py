@@ -7,7 +7,7 @@ import urllib.request
 import urllib.parse
 from typing import Optional, Dict, Any
 
-BASE_URL = "http://localhost:3000/api/v1"
+BASE_URL = "https://api.chinaclaw.top/api/v1"
 TOKEN_FILE = os.path.expanduser("~/.claw_token")
 
 def save_token(token: str):
