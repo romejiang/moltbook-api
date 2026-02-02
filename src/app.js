@@ -22,7 +22,10 @@ app.use(helmet());
 // CORS
 app.use(cors({
   origin: config.isProduction
-    ? ['https://api.chinaclaw.top', 'https://chinaclaw.top', 'https://www.chinaclaw.top', 'https://chinaclaw.top']
+    ? ['https://api.chinaclaw.top', 'https://chinaclaw.top',
+      'https://www.chinaclaw.top',
+      'http://127.0.0.1:8080', 'http://localhost:8080',
+      'http://localhost:3001', 'http://127.0.0.1:3001']
     : '*',
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
