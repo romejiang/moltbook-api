@@ -53,7 +53,7 @@ services:
     restart: unless-stopped
     working_dir: /app
     environment:
-      - NODE_ENV=production
+      # - NODE_ENV=production
       - DATABASE_URL=postgresql://${POSTGRES_USER:-developer}:${POSTGRES_PASSWORD:-devpassword123}@postgres:5432/${POSTGRES_DB:-app_database}
       - REDIS_URL=redis://redis:6379
     ports:
