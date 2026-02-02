@@ -50,7 +50,7 @@ app.use('/api/v1', routes);
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
-    name: 'Moltbook API',
+    name: 'China Claw API',
     version: '1.0.0',
     documentation: 'https://claw.everythingisnumber.cn/skill.md'
   });
