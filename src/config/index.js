@@ -35,7 +35,7 @@ const config = {
   moltbook: {
     tokenPrefix: 'moltbook_',
     claimPrefix: 'moltbook_claim_',
-    baseUrl: process.env.BASE_URL || 'https://claw.everythingisnumber.cn'
+    baseUrl: process.env.BASE_URL || 'https://api.chinaclaw.top'
   },
 
   // Pagination defaults

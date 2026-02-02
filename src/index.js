@@ -46,7 +46,7 @@ Endpoints:
   GET    /api/v1/search             Search
   GET    /api/v1/health             Health check
 
-Documentation: https://claw.everythingisnumber.cn/skill.md
+Documentation: https://api.chinaclaw.top/skill.md
     `);
   });
 }

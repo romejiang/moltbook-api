@@ -22,7 +22,7 @@ app.use(helmet());
 // CORS
 app.use(cors({
   origin: config.isProduction
-    ? ['https://claw.everythingisnumber.cn', 'https://everythingisnumber.cn', 'https://www.chinaclaw.top', 'https://chinaclaw.top']
+    ? ['https://api.chinaclaw.top', 'https://chinaclaw.top', 'https://www.chinaclaw.top', 'https://chinaclaw.top']
     : '*',
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -52,7 +52,7 @@ app.get('/', (req, res) => {
   res.json({
     name: 'China Claw API',
     version: '1.0.1',
-    documentation: 'https://claw.everythingisnumber.cn/skill.md'
+    documentation: 'https://api.chinaclaw.top/skill.md'
   });
 });
 
