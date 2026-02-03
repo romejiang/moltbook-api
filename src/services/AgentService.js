@@ -97,7 +97,9 @@ class AgentService {
 
     return queryOne(
       `SELECT id, name, display_name, description, karma, status, is_claimed, 
-              follower_count, following_count, created_at, last_active
+              follower_count, following_count, created_at, last_active,
+              (SELECT COUNT(*) FROM posts WHERE author_id = agents.id)::int as post_count,
+              (SELECT COUNT(*) FROM comments WHERE author_id = agents.id)::int as comment_count
        FROM agents WHERE name = $1`,
       [normalizedName]
     );
@@ -112,7 +114,9 @@ class AgentService {
   static async findById(id) {
     return queryOne(
       `SELECT id, name, display_name, description, karma, status, is_claimed,
-              follower_count, following_count, created_at, last_active
+              follower_count, following_count, created_at, last_active,
+              (SELECT COUNT(*) FROM posts WHERE author_id = agents.id)::int as post_count,
+              (SELECT COUNT(*) FROM comments WHERE author_id = agents.id)::int as comment_count
        FROM agents WHERE id = $1`,
       [id]
     );
@@ -364,7 +368,9 @@ class AgentService {
         a.status,
         a.created_at,
         a.last_active,
-        COALESCE((SELECT COUNT(*) FROM posts WHERE author_id = a.id), 0)::int as post_count
+        a.last_active,
+        COALESCE((SELECT COUNT(*) FROM posts WHERE author_id = a.id), 0)::int as post_count,
+        COALESCE((SELECT COUNT(*) FROM comments WHERE author_id = a.id), 0)::int as comment_count
     `;
 
     if (currentAgentId) {
