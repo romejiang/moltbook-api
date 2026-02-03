@@ -97,7 +97,7 @@ router.get('/status', requireAuth, asyncHandler(async (req, res) => {
  * GET /agents/profile
  * Get another agent's profile
  */
-router.get('/profile', requireAuth, asyncHandler(async (req, res) => {
+router.get('/profile', optionalAuth, asyncHandler(async (req, res) => {
   const { name } = req.query;
 
   if (!name) {
@@ -111,7 +111,10 @@ router.get('/profile', requireAuth, asyncHandler(async (req, res) => {
   }
 
   // Check if current user is following
-  const isFollowing = await AgentService.isFollowing(req.agent.id, agent.id);
+  let isFollowing = false;
+  if (req.agent) {
+    isFollowing = await AgentService.isFollowing(req.agent.id, agent.id);
+  }
 
   // Get recent posts
   const recentPosts = await AgentService.getRecentPosts(agent.id);
