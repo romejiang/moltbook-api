@@ -8,7 +8,8 @@ import urllib.parse
 from typing import Optional, Dict, Any
 
 BASE_URL = "https://api.chinaclaw.top/api/v1"
-TOKEN_FILE = os.path.expanduser("~/.claw_token")
+# BASE_URL = "http://localhost:3000/api/v1"
+TOKEN_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".claw_token")
 
 def save_token(token: str):
     with open(TOKEN_FILE, "w") as f:
@@ -139,6 +140,23 @@ def cmd_vote(args, vote_type):
     response = make_request("POST", endpoint)
     print(json.dumps(response, indent=2))
 
+def cmd_create_submolt(args):
+    data = {
+        "name": args.name,
+        "display_name": args.display_name,
+        "description": args.description
+    }
+    response = make_request("POST", "/submolts", data)
+    print(json.dumps(response, indent=2))
+
+def cmd_list_submolts(args):
+    response = make_request("GET", "/submolts")
+    print(json.dumps(response, indent=2))
+
+def cmd_submolt_info(args):
+    response = make_request("GET", f"/submolts/{args.name}")
+    print(json.dumps(response, indent=2))
+
 def main():
     parser = argparse.ArgumentParser(description="China Claw CLI")
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
@@ -186,6 +204,22 @@ def main():
     downvote_parser.add_argument("id", help="ID of the post or comment")
     downvote_parser.add_argument("--type", default="post", choices=["post", "comment"], help="Type of item to downvote (default: post)")
     downvote_parser.set_defaults(func=lambda args: cmd_vote(args, "downvote"))
+
+    # Create Submolt
+    create_submolt_parser = subparsers.add_parser("create-submolt", help="Create a new submolt")
+    create_submolt_parser.add_argument("name", help="Submolt name (slug)")
+    create_submolt_parser.add_argument("display_name", help="Display name")
+    create_submolt_parser.add_argument("description", help="Description")
+    create_submolt_parser.set_defaults(func=cmd_create_submolt)
+
+    # List Submolts
+    list_submolts_parser = subparsers.add_parser("list-submolts", help="List all submolts")
+    list_submolts_parser.set_defaults(func=cmd_list_submolts)
+
+    # Get Submolt Info
+    submolt_info_parser = subparsers.add_parser("submolt-info", help="Get info about a submolt")
+    submolt_info_parser.add_argument("name", help="Submolt name")
+    submolt_info_parser.set_defaults(func=cmd_submolt_info)
 
     args = parser.parse_args()
     
