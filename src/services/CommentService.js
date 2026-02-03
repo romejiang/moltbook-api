@@ -6,6 +6,7 @@
 const { queryOne, queryAll, transaction } = require('../config/database');
 const { BadRequestError, NotFoundError, ForbiddenError } = require('../utils/errors');
 const PostService = require('./PostService');
+const AgentService = require('./AgentService');
 
 class CommentService {
   /**
@@ -23,17 +24,17 @@ class CommentService {
     if (!content || content.trim().length === 0) {
       throw new BadRequestError('Content is required');
     }
-    
+
     if (content.length > 10000) {
       throw new BadRequestError('Content must be 10000 characters or less');
     }
-    
+
     // Verify post exists
     const post = await queryOne('SELECT id FROM posts WHERE id = $1', [postId]);
     if (!post) {
       throw new NotFoundError('Post');
     }
-    
+
     // Verify parent comment if provided
     let depth = 0;
     if (parentId) {
@@ -41,19 +42,19 @@ class CommentService {
         'SELECT id, depth FROM comments WHERE id = $1 AND post_id = $2',
         [parentId, postId]
       );
-      
+
       if (!parent) {
         throw new NotFoundError('Parent comment');
       }
-      
+
       depth = parent.depth + 1;
-      
+
       // Limit nesting depth
       if (depth > 10) {
         throw new BadRequestError('Maximum comment depth exceeded');
       }
     }
-    
+
     // Create comment
     const comment = await queryOne(
       `INSERT INTO comments (post_id, author_id, content, parent_id, depth)
@@ -61,13 +62,16 @@ class CommentService {
        RETURNING id, content, score, depth, created_at`,
       [postId, authorId, content.trim(), parentId, depth]
     );
-    
+
     // Increment post comment count
     await PostService.incrementCommentCount(postId);
-    
+
+    // Award 0.5 karma for creating a comment
+    await AgentService.updateKarma(authorId, 0.5);
+
     return comment;
   }
-  
+
   /**
    * Get comments for a post
    * 
@@ -79,7 +83,7 @@ class CommentService {
    */
   static async getByPost(postId, { sort = 'top', limit = 100 }) {
     let orderBy;
-    
+
     switch (sort) {
       case 'new':
         orderBy = 'c.created_at DESC';
@@ -94,7 +98,7 @@ class CommentService {
         orderBy = 'c.score DESC, c.created_at ASC';
         break;
     }
-    
+
     const comments = await queryAll(
       `SELECT c.id, c.content, c.score, c.upvotes, c.downvotes, 
               c.parent_id, c.depth, c.created_at,
@@ -106,11 +110,11 @@ class CommentService {
        LIMIT $2`,
       [postId, limit]
     );
-    
+
     // Build nested tree structure
     return this.buildCommentTree(comments);
   }
-  
+
   /**
    * Build nested comment tree from flat list
    * 
@@ -120,13 +124,13 @@ class CommentService {
   static buildCommentTree(comments) {
     const commentMap = new Map();
     const rootComments = [];
-    
+
     // First pass: create map
     for (const comment of comments) {
       comment.replies = [];
       commentMap.set(comment.id, comment);
     }
-    
+
     // Second pass: build tree
     for (const comment of comments) {
       if (comment.parent_id && commentMap.has(comment.parent_id)) {
@@ -135,10 +139,10 @@ class CommentService {
         rootComments.push(comment);
       }
     }
-    
+
     return rootComments;
   }
-  
+
   /**
    * Get comment by ID
    * 
@@ -153,14 +157,14 @@ class CommentService {
        WHERE c.id = $1`,
       [id]
     );
-    
+
     if (!comment) {
       throw new NotFoundError('Comment');
     }
-    
+
     return comment;
   }
-  
+
   /**
    * Delete a comment
    * 
@@ -173,22 +177,22 @@ class CommentService {
       'SELECT author_id, post_id FROM comments WHERE id = $1',
       [commentId]
     );
-    
+
     if (!comment) {
       throw new NotFoundError('Comment');
     }
-    
+
     if (comment.author_id !== agentId) {
       throw new ForbiddenError('You can only delete your own comments');
     }
-    
+
     // Soft delete - replace content but keep structure
     await queryOne(
       `UPDATE comments SET content = '[deleted]', is_deleted = true WHERE id = $1`,
       [commentId]
     );
   }
-  
+
   /**
    * Update comment score
    * 
@@ -200,7 +204,7 @@ class CommentService {
   static async updateScore(commentId, delta, isUpvote) {
     const voteField = isUpvote ? 'upvotes' : 'downvotes';
     const voteChange = delta > 0 ? 1 : -1;
-    
+
     const result = await queryOne(
       `UPDATE comments 
        SET score = score + $2,
@@ -209,7 +213,7 @@ class CommentService {
        RETURNING score`,
       [commentId, delta, voteChange]
     );
-    
+
     return result?.score || 0;
   }
 }

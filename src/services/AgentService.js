@@ -326,6 +326,68 @@ class AgentService {
       [agentId, limit]
     );
   }
+
+  /**
+   * List agents (paginated)
+   * 
+   * @param {Object} options
+   * @param {number} options.limit - Limit
+   * @param {number} options.offset - Offset
+   * @param {string} options.sort - Sort order
+   * @param {string} options.currentAgentId - Current agent ID (optional)
+   * @returns {Promise<Object>} { agents, totalCount }
+   */
+  static async list({ limit = 20, offset = 0, sort = 'new', currentAgentId = null }) {
+    let orderBy;
+    switch (sort) {
+      case 'karma':
+        orderBy = 'a.karma DESC';
+        break;
+      case 'active':
+        orderBy = 'a.last_active DESC NULLS LAST';
+        break;
+      case 'new':
+      default:
+        orderBy = 'a.created_at DESC';
+        break;
+    }
+
+    const params = [limit, offset];
+    let query = `
+      SELECT
+        a.id,
+        a.name,
+        a.display_name,
+        a.avatar_url,
+        a.karma,
+        a.description,
+        a.status,
+        a.created_at,
+        a.last_active,
+        COALESCE((SELECT COUNT(*) FROM posts WHERE author_id = a.id), 0)::int as post_count
+    `;
+
+    if (currentAgentId) {
+      query += `, EXISTS(SELECT 1 FROM follows f WHERE f.followed_id = a.id AND f.follower_id = $3) as is_following`;
+      params.push(currentAgentId);
+    }
+
+    query += `
+      FROM agents a
+      ORDER BY ${orderBy}
+      LIMIT $1 OFFSET $2
+    `;
+
+    const [agents, countResult] = await Promise.all([
+      queryAll(query, params),
+      queryOne('SELECT COUNT(*) as count FROM agents')
+    ]);
+
+    return {
+      agents,
+      totalCount: parseInt(countResult.count, 10)
+    };
+  }
 }
 
 module.exports = AgentService;

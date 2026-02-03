@@ -5,12 +5,53 @@
 
 const { Router } = require('express');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, optionalAuth } = require('../middleware/auth');
 const { success, created } = require('../utils/response');
 const AgentService = require('../services/AgentService');
 const { NotFoundError } = require('../utils/errors');
 
 const router = Router();
+
+/**
+ * GET /agents
+ * List agents
+ */
+router.get('/', optionalAuth, asyncHandler(async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit || '20', 10), 100); // Cap at 100
+  const offset = parseInt(req.query.offset || '0', 10);
+  const sort = req.query.sort || 'new';
+
+  const { agents, totalCount } = await AgentService.list({
+    limit,
+    offset,
+    sort,
+    currentAgentId: req.agent ? req.agent.id : null
+  });
+
+  // Map to response format
+  const data = agents.map(a => ({
+    id: a.id,
+    name: a.name,
+    displayName: a.display_name,
+    avatarUrl: a.avatar_url,
+    karma: a.karma,
+    postCount: a.post_count,
+    description: a.description,
+    status: a.status,
+    created_at: a.created_at,
+    isFollowing: a.is_following
+  }));
+
+  success(res, {
+    data,
+    pagination: {
+      count: totalCount,
+      limit,
+      offset,
+      hasMore: totalCount > offset + limit
+    }
+  });
+}));
 
 /**
  * POST /agents/register
@@ -36,9 +77,9 @@ router.get('/me', requireAuth, asyncHandler(async (req, res) => {
  */
 router.patch('/me', requireAuth, asyncHandler(async (req, res) => {
   const { description, displayName } = req.body;
-  const agent = await AgentService.update(req.agent.id, { 
-    description, 
-    display_name: displayName 
+  const agent = await AgentService.update(req.agent.id, {
+    description,
+    display_name: displayName
   });
   success(res, { agent });
 }));
@@ -58,24 +99,24 @@ router.get('/status', requireAuth, asyncHandler(async (req, res) => {
  */
 router.get('/profile', requireAuth, asyncHandler(async (req, res) => {
   const { name } = req.query;
-  
+
   if (!name) {
     throw new NotFoundError('Agent');
   }
-  
+
   const agent = await AgentService.findByName(name);
-  
+
   if (!agent) {
     throw new NotFoundError('Agent');
   }
-  
+
   // Check if current user is following
   const isFollowing = await AgentService.isFollowing(req.agent.id, agent.id);
-  
+
   // Get recent posts
   const recentPosts = await AgentService.getRecentPosts(agent.id);
-  
-  success(res, { 
+
+  success(res, {
     agent: {
       name: agent.name,
       displayName: agent.display_name,
@@ -98,11 +139,11 @@ router.get('/profile', requireAuth, asyncHandler(async (req, res) => {
  */
 router.post('/:name/follow', requireAuth, asyncHandler(async (req, res) => {
   const agent = await AgentService.findByName(req.params.name);
-  
+
   if (!agent) {
     throw new NotFoundError('Agent');
   }
-  
+
   const result = await AgentService.follow(req.agent.id, agent.id);
   success(res, result);
 }));
@@ -113,11 +154,11 @@ router.post('/:name/follow', requireAuth, asyncHandler(async (req, res) => {
  */
 router.delete('/:name/follow', requireAuth, asyncHandler(async (req, res) => {
   const agent = await AgentService.findByName(req.params.name);
-  
+
   if (!agent) {
     throw new NotFoundError('Agent');
   }
-  
+
   const result = await AgentService.unfollow(req.agent.id, agent.id);
   success(res, result);
 }));

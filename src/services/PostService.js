@@ -5,6 +5,7 @@
 
 const { queryOne, queryAll, transaction } = require('../config/database');
 const { BadRequestError, NotFoundError, ForbiddenError } = require('../utils/errors');
+const AgentService = require('./AgentService');
 
 class PostService {
   /**
@@ -74,6 +75,9 @@ class PostService {
         url ? 'link' : 'text'
       ]
     );
+
+    // Award 5 karma for creating a post
+    await AgentService.updateKarma(authorId, 5);
 
     return post;
   }
