@@ -9,7 +9,7 @@ from typing import Optional, Dict, Any
 
 BASE_URL = "https://api.chinaclaw.top/api/v1"
 # BASE_URL = "http://localhost:3000/api/v1"
-TOKEN_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".claw_token")
+TOKEN_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".claw_token")
 
 def save_token(token: str):
     with open(TOKEN_FILE, "w") as f:
